@@ -7,7 +7,7 @@ from datetime import timedelta
 import platform
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon, FancyArrow, Circle
+from matplotlib.patches import Polygon, FancyArrow, Circle, Rectangle
 
 import sys, os
 import platform
@@ -370,6 +370,7 @@ class ScriptSelector:
         
         frame[np.where((rot_ts_frame1 != [0,0,0]).all(axis=2))]=[0,0,0]
         frame=cv2.add(frame,rot_ts_frame)
+        
         return frame
         
         
@@ -1392,7 +1393,7 @@ class KO_Sys:
         w=self.root.winfo_width()
         cv2.moveWindow("Video",x+w+30,y)
 
-        cv2.setWindowProperty("Video", cv2.WND_PROP_TOPMOST, 1)
+        #cv2.setWindowProperty("Video", cv2.WND_PROP_TOPMOST, 1)
         cv2.setMouseCallback("Video", self.marka)
         cv2.setWindowTitle("Video","POSITION MARKIEREN (KLICK INS BILD)")
         
@@ -1413,7 +1414,7 @@ class KO_Sys:
                 y=self.root.winfo_y()
                 w=self.root.winfo_width()
                 cv2.moveWindow("Video",x+w+30,y)
-                cv2.setWindowProperty("Video", cv2.WND_PROP_TOPMOST, 1)
+                #cv2.setWindowProperty("Video", cv2.WND_PROP_TOPMOST, 1)
                 cv2.setMouseCallback("Video", self.marka)
                 cv2.setWindowTitle("Video","POSITION MARKIEREN (KLICK INS BILD)")
                 self.marka2=True
@@ -1554,7 +1555,7 @@ class KO_Sys:
     def add_timestamp(self):
         global cached_frames, total_frames,current_frame,fps,fps_native,t0_frame,t0_time,start_point,scale_added, timestamp_added
         if cached_frames is not None:
-            cv2.setWindowProperty("Video", cv2.WND_PROP_TOPMOST, 1)
+            #cv2.setWindowProperty("Video", cv2.WND_PROP_TOPMOST, 1)
             cv2.setMouseCallback("Video", self.select_timestamp_position)
             cv2.setWindowTitle("Video","ZEITSTEMPEL POSITIONIEREN (KLICK INS BILD)")
             self.reset_all_buttons()
@@ -1562,13 +1563,14 @@ class KO_Sys:
                 self.add_time_button.config(relief='sunken',highlightbackground='green')
             else:
                 self.add_time_button.config(relief='sunken',bg='green')
-            timestamp_added=True
+            #timestamp_added=True
             
 
     def select_timestamp_position(self,event, x, y, flags, param):
         global cached_frames, total_frames,current_frame,fps,fps_native,t0_frame,t0_time,start_point,scale_added, timestamp_added, timestamp_position
         if event == cv2.EVENT_LBUTTONDOWN:
             timestamp_position = (x, y)
+            timestamp_added=True            
             self.show_first_frame()
 
    
@@ -1924,7 +1926,8 @@ class KO_Sys:
                 self.update_control_panel(total_frames,fps)
             if timestamp_added:
                 #self.draw_timestamp(self.first_frame)
-                frame1=self.draw_timestamp(self.first_frame)
+                frame2=self.first_frame.copy()
+                frame1=self.draw_timestamp(frame2)
                 self.first_frame=frame1.copy()
 
                 #cv2.imshow("Test",self.first_frame)
@@ -1974,7 +1977,7 @@ class KO_Sys:
                 self.overlay_image(self.first_frame)
                 
             cv2.imshow("Video", self.first_frame)
-            #cv2.waitKey(1)
+            
             self.Plotting=False
             
             
@@ -1984,12 +1987,13 @@ class KO_Sys:
         if not self.Plotting:
             if cached_frames is not None and int(value) in cached_frames:
                 current_frame = int(value)
+                #self.first_frame=cached_frames[current_frame].copy()
                 #self.cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
                 #ret, frame = self.cap.read()
                 #if ret:
-                    #self.first_frame=frame           
+                    #self.first_frame=frame          
                 self.show_first_frame()
-            
+                
     def next_frame(self):
         global cached_frames, total_frames,current_frame,fps,fps_native,t0_frame,t0_time,start_point,scale_added, timestamp_added
         if cached_frames is not None and self.video_slider.get()+1 in cached_frames:
@@ -2059,7 +2063,7 @@ class KO_Sys:
         
             
 
-            cv2.setWindowProperty("Video", cv2.WND_PROP_TOPMOST, 1)
+            #cv2.setWindowProperty("Video", cv2.WND_PROP_TOPMOST, 1)
             if polarmode=="ThreePoints":
                 cv2.setMouseCallback("Video", self.select_polar)
             if polarmode=="CenterRadius":
@@ -2416,7 +2420,7 @@ class KO_Sys:
             #self.show_first_frame()
             #cv2.waitKey(1)
             self.polar=False
-            cv2.setWindowProperty("Video", cv2.WND_PROP_TOPMOST, 1)
+            #cv2.setWindowProperty("Video", cv2.WND_PROP_TOPMOST, 1)
             cv2.setMouseCallback("Video", self.select_point)
             cv2.setWindowTitle("Video","KO-SYSTEM AUSRICHTEN (klicken, ziehen, klicken)")
             self.reset_all_buttons()
@@ -2533,7 +2537,7 @@ class KO_Sys:
                 self.length_button.config(relief='sunken',highlightbackground='red')
             else:
                 self.length_button.config(relief='sunken',bg='red')
-            cv2.setWindowProperty("Video", cv2.WND_PROP_TOPMOST, 1)
+            #cv2.setWindowProperty("Video", cv2.WND_PROP_TOPMOST, 1)
             cv2.setMouseCallback("Video", self.select_point_2)
             cv2.setWindowTitle("Video","MASSSTAB FESTLEGEN (klicken, ziehen, klicken)")
 
@@ -2788,15 +2792,90 @@ class KO_Sys:
                 known_length_in_pixels=lnorm
                 known_length_in_m=float(self.cal.get())
                 if screenheight<=imageheight:
-                    pixels_x=2*(rmax-rmin)/known_length_in_m*known_length_in_pixels*screenheight/imageheight  
+                    scaling=screenheight/imageheight
+                    pixels_x=5*(rmax-rmin)/known_length_in_m*known_length_in_pixels*screenheight/imageheight
+                    
                 else:
-                    pixels_x=2*(rmax-rmin)/known_length_in_m*known_length_in_pixels
-
-                fig, ax = plt.subplots(figsize=(pixels_x*px, pixels_x*px),layout='constrained',subplot_kw={'projection': 'polar'})
-               
-
+                    pixels_x=5*(rmax-rmin)/known_length_in_m*known_length_in_pixels
+                    scaling=1.
                 
 
+               # fig, ax = plt.subplots(figsize=(pixels_x*px, pixels_x*px),layout='constrained',subplot_kw={'projection': 'polar'})
+                #fig, ax = plt.subplots(figsize=(pixels_x*px, pixels_x*px),subplot_kw={'projection': 'polar'})
+                fig, ax = plt.subplots(1,1,figsize=(pixels_x*px, pixels_x*px),subplot_kw={'projection': 'polar'})
+                #fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+                #fig, ax = plt.subplots(1,1,figsize=(pixels_x*px, pixels_x*px),layout='constrained',subplot_kw={'projection': 'polar'})
+                #fig.subplots_adjust(left=0.1,right=0.9)
+               
+               
+                Transparency=not(self.bg.get())
+                if not Transparency:     
+                    fig.patch.set(alpha=0.0)
+                    ax.patch.set(alpha=0.0)
+                    #Hintergrundkreis zeichnen
+
+                    # Create a dummy text to calculate the bounding box
+                    text = ax.text(0.5, 0.5, 'XX360°XX', fontsize=1.5*2*int(self.lsize.get()), transform=ax.transAxes)
+                    
+                    # Draw the figure to calculate the size in pixels
+                    #plt.draw()
+                    fig.canvas.draw()
+                    
+                    # Get the bounding box in pixels
+                    bbox = text.get_window_extent(renderer=plt.gcf().canvas.get_renderer())
+                    # Calculate the diagonal of the bounding box
+                    diagonal_in_pixels = np.sqrt(bbox.width**2 + bbox.height**2)
+                    
+                    # Assuming the diagonal in pixels corresponds to a proportional delta_r in units
+                    fig_width_in_pixels = ax.get_window_extent().width
+                    delta_r = (diagonal_in_pixels / fig_width_in_pixels) * rmax
+                    
+                    
+                    # Remove the dummy text
+                    text.remove()
+
+
+                    #rmax_coords = (0,rmax)  # Datenkoordinaten des Anheftpunkts
+                    #r0_coords=(0,0)
+                    #print("rmax",rmax)
+                    #rmax_display_coords = ax.transData.transform(rmax_coords)  # Transformiere zu Display Koordinaten
+                    #r0_display_coords = ax.transData.transform(r0_coords)  # Transformiere zu Display Koordinaten
+                    #rmax_display_coords=(rmax_display_coords[0],rmax_display_coords[1])
+                    #rdist=np.sqrt((rmax_display_coords[1]-r0_display_coords[1])**2.+(rmax_display_coords[0]-r0_display_coords[0])**2.)
+                    #print("Display",rmax_display_coords,r0_display_coords,rdist)
+                    #print("PIXELS",pixels_x)
+                    #rmax_coords = ax.transData.inverted().transform(rmax_display_coords)
+                    #print("rmax_coords",rmax_coords,2*int(self.lsize.get()),rmax)
+                    #randnorm=rmax/rdist/pixels_x
+                    #print("RANDNORM",randnorm)
+                    #ax.add_patch(Circle((0,0),radius=1.7,transform=ax.transData._b,facecolor='white',clip_on=False))
+                    #print("Labelsize",int(self.lsize.get())/pixels_x)
+                    #rel_lsize=int(self.lsize.get())/pixels_x
+                     
+
+                    #ax.add_patch(Circle((0,0),radius=rmax+rel_lsize*11*randfaktor,transform=ax.transData._b,facecolor='white',clip_on=False))
+                    #r_bounds = [0, rmax]
+                    if self.polarscale_length.get():
+                        tminbak=theta_min
+                        tmaxbak=theta_max
+                        theta_min=tminbak/2./np.pi/rmax*360.
+                        theta_max=tmaxbak/2./np.pi/rmax*360.
+                        if theta_max>=360. and theta_max<=363.: theta_max=360.
+                        thetabounds= np.deg2rad(np.arange(theta_min, theta_max, 1./180.))
+                        theta_min=tminbak
+                        theta_max=tmaxbak
+                    else:
+                        thetabounds= np.deg2rad(np.arange(theta_min, theta_max, 1./180.))
+                    #ax.fill_between(thetabounds,0,rmax+int(self.lsize.get())*7*known_length_in_m/known_length_in_pixels,color='white',clip_on=False)
+                    #ax.fill_between(thetabounds,0,rmax+10.*int(self.lsize.get())*known_length_in_m/known_length_in_pixels/scaling,color='white',clip_on=False)
+                    #ax.fill_between(thetabounds,0,rmax+50000*known_length_in_m/known_length_in_pixels/imageheight*2*int(self.lsize.get())/12,color='white',clip_on=False)
+                    ax.fill_between(thetabounds,0,rmax+delta_r,color='white',clip_on=False)
+                    #fig.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
+                else:
+                    fig.patch.set(alpha=0.0)
+                    ax.patch.set(alpha=0.0)
+                
+                
                 labeldist = float(self.labels_label_entry.get())
                 shortdist = float(self.shortticks_entry.get())
                 longdist = float(self.longticks_entry.get())
@@ -2832,15 +2911,21 @@ class KO_Sys:
                     for i in ticks:
                         thetalabels.append(str(round(i/180.,2))+"π")
 
+                if not self.show_xlabels.get():
+                    thetagrids=ticks.copy()
+                    thetalabels=[]
+                    for i in ticks:
+                        thetalabels.append(None)
+
                 if self.invertvar_y.get():
                     ax.set_theta_direction(-1)
                     
-                if not self.zerolabel.get():
+                if not self.zerolabel.get() and not self.polarscale_length.get():
                     del thetalabels[0]
                     #print(thetagrids,thetalabels)
                     thetagrids=np.delete(thetagrids,[0])
                     
-                if not self.lastlabelvar.get():
+                if not self.lastlabelvar.get() and not self.polarscale_length.get():
                     del thetalabels[-1]
                     thetagrids=np.delete(thetagrids,[-1])
 
@@ -2858,14 +2943,7 @@ class KO_Sys:
                 ax.spines[:].set_color(grayscale)
                 ax.spines[:].set_linewidth(linewidth)
 
-                Transparency=not(self.bg.get())
-                if Transparency:     
-                    fig.patch.set(alpha=0.0)
-                    ax.patch.set(alpha=0.0)
-                else:
-                    fig.patch.set(alpha=1.0)
-                    ax.patch.set(alpha=1.0)
-
+               
                
 
                 ax.set_rmin(rmin)
@@ -2913,43 +2991,61 @@ class KO_Sys:
                 # set these new labels
                 ax.set_yticklabels(labels)
 
-                tickfactor=np.round(1-float(self.ticklength.get())/20.*.06,2)
-                longtickfactor=np.round(1-float(self.ticklength.get())/20.*.12,2)
-                #print("TICKFAKTOR",tickfactor)
-                tick = [ax.get_rmax(), ax.get_rmax() * tickfactor]
-                longtick = [ax.get_rmax(), ax.get_rmax() * longtickfactor]  
-                # Iterate the points between 0 to 360 with step=10
-                if not self.polarscale_length.get():
-                    for t in np.deg2rad(np.arange(theta_min, theta_max, shortdist)):
-                        ax.plot([t, t], tick, lw=gridwidth, color = grayscale)
-                    for t in np.deg2rad(np.arange(theta_min, theta_max, longdist)):
-                        ax.plot([t, t], longtick, lw=gridwidth, color = grayscale) 
-                else:
-                    for t in np.deg2rad(np.arange(theta_min, theta_max, shortdist/2./np.pi/rmax*360.)):
-                        ax.plot([t, t], tick, lw=gridwidth, color = grayscale)
-                    for t in np.deg2rad(np.arange(theta_min, theta_max, longdist/2./np.pi/rmax*360.)):
-                        ax.plot([t, t], longtick, lw=gridwidth, color = grayscale)
-                     
-                
-                
+                if self.show_xlabels.get():
+                    tickfactor=np.round(1-float(self.ticklength.get())/20.*.06,2)
+                    longtickfactor=np.round(1-float(self.ticklength.get())/20.*.12,2)
+                    #print("TICKFAKTOR",tickfactor)
+                    tick = [ax.get_rmax(), ax.get_rmax() * tickfactor]
+                    longtick = [ax.get_rmax(), ax.get_rmax() * longtickfactor]  
+                    # Iterate the points between 0 to 360 with step=10
+                    if not self.polarscale_length.get():
+                        for t in np.deg2rad(np.arange(theta_min, theta_max, shortdist)):
+                            ax.plot([t, t], tick, lw=gridwidth, color = grayscale)
+                        for t in np.deg2rad(np.arange(theta_min, theta_max, longdist)):
+                            ax.plot([t, t], longtick, lw=gridwidth, color = grayscale) 
+                    else:
+                        for t in np.deg2rad(np.arange(theta_min, theta_max, shortdist/2./np.pi/rmax*360.)):
+                            ax.plot([t, t], tick, lw=gridwidth, color = grayscale)
+                        for t in np.deg2rad(np.arange(theta_min, theta_max, longdist/2./np.pi/rmax*360.)):
+                            ax.plot([t, t], longtick, lw=gridwidth, color = grayscale)
+                        
+                    
+                    
 
                 if(not self.show_ylabels.get()):
                     ax.grid(axis='both',visible=False)
                     labels=[]
                     ax.set_yticklabels(labels)
                 else:
-                    ax.grid(axis='y',visible=True)
+                    ax.grid(axis='y',which='both',visible=True)
+                    
+                    if not self.show_xlabels.get():
+                        ax.grid(axis='y',visible=True)
+                        #ax.spines['theta'].set_visible=False
+                        ax.set_thetagrids([])
                     
                 #plt.scatter([0],[0], c=grayscale, marker="+",clip_on=False)
                 ax.plot([0],[0],marker="+",markersize=20,color=grayscale,clip_on=False)
+
+
+               
                 
                 ax.set_rmin(rmin)
                 ax.set_rmax(rmax)
                 ax.set_thetamin(theta_min)
                 ax.set_thetamax(theta_max)
+                
+                
+                #fig.set_size_inches(1.5*pixels_x*px,1.5*pixels_x*px)
+                #fig.subplots_adjust(left=0.15, right=0.85, top=0.85, bottom=0.15)  
+              
+                
+                #fig.tight_layout()
 
-
-                fig.canvas.draw()   
+                fig.canvas.draw()
+                #fig.tight_layout()
+                fig.subplots_adjust(left=0.25, right=0.75, top=0.75, bottom=0.25)  
+                fig.canvas.draw()
 
                 imbuf = fig.canvas.buffer_rgba()
                 imbufnp = np.asarray(imbuf)
@@ -3112,6 +3208,7 @@ class KO_Sys:
                 yax = self.ybounds_entry.get()
                 ymin, ymax = map(float,yax.split(',')) 
                 #ticks_frequency = 0.1
+
                 
                 #DPI = ((Vergleichsmassstabslänge in px/Vergleichsmassstabslänge in Skaleneinheiten)*(xmin-xmax))/10 (durch 10, weil die Figur 10 inches breit ist)
                 #dpi_im = lnorm/float(self.cal.get())*(xmax-xmin)/10.*1.5
@@ -3124,22 +3221,53 @@ class KO_Sys:
                 known_length_in_pixels=lnorm
                 known_length_in_m=float(self.cal.get())
                 if screenheight<=imageheight:
-                    pixels_x=2*max((xmax-xmin),(ymax-ymin))/known_length_in_m*known_length_in_pixels*screenheight/imageheight  
+                    pixels_x=4*max((xmax-xmin),(ymax-ymin))/known_length_in_m*known_length_in_pixels*screenheight/imageheight 
+                    #pixels_x=2*max((xmax-xmin),(ymax-ymin))/known_length_in_m*known_length_in_pixels 
+                    #pixels_x=int((screenheight+imageheight)/2)
+                     
                 else:
                     pixels_x=2*max((xmax-xmin),(ymax-ymin))/known_length_in_m*known_length_in_pixels  
                 
                
                 print('PIXELS_X',pixels_x*px,"px=",px,"1/px=",1/px)
                
-                fig, ax = plt.subplots(figsize=(pixels_x*px, pixels_x*px))
+                fig, ax = plt.subplots(figsize=(pixels_x*px, pixels_x*px),layout='constrained')
+
+
+                Transparency=not(self.bg.get())
+                if not Transparency:     
+                    fig.patch.set(alpha=0.0)
+                    ax.patch.set(alpha=0.0)
+                    #Hintergrundkreis zeichnen
+
+                    # Create a dummy text to calculate the bounding box
+                    text = ax.text(0.5, 0.5, 'XXXX', fontsize=1.*2*int(self.lsize.get()), transform=ax.transAxes)
+                    
+                    # Draw the figure to calculate the size in pixels
+                    #plt.draw()
+                    fig.canvas.draw()
+                    
+                    # Get the bounding box in pixels
+                    bbox = text.get_window_extent(renderer=plt.gcf().canvas.get_renderer())
+                    # Calculate the diagonal of the bounding box
+                    diagonal_in_pixels = np.sqrt(bbox.width**2 + bbox.height**2)
+                    
+                    # Assuming the diagonal in pixels corresponds to a proportional delta_r in units
+                    fig_width_in_pixels = ax.get_window_extent().width
+                    delta_r = (diagonal_in_pixels / fig_width_in_pixels) * (xmax-xmin)
+                    
+                    
+                    # Remove the dummy text
+                    text.remove()
+               
                 
                 shortdist = float(self.shortticks_entry.get())
                 longdist = float(self.longticks_entry.get())
                 
                 if self.kosys.get():
-                    ax.set(xlim=(xmin, xmax+longdist))
+                    ax.set(xlim=(xmin-shortdist, xmax+longdist))
                 else:
-                    ax.set(xlim=(xmin, xmax+longdist))
+                    ax.set(xlim=(xmin-0.5*longdist, xmax+longdist))
                     
                 ticks = np.arange(xmin, xmax+longdist, longdist)
                 #mticks sind die minor ticks
@@ -3170,7 +3298,8 @@ class KO_Sys:
 
                 if self.kosys.get():
                     #Y-ACHSE: Achsenverhältnis auf 1
-                    ax.set(ylim=(ymin, ymax+longdist),aspect=1)
+                    ax.set(ylim=(ymin-shortdist, ymax+longdist),aspect=1)
+                    #ax.set(ylim=(ymin, ymax+longdist),aspect=1)
                     yticks = np.arange(ymin, ymax+longdist, longdist)
                     #mticks sind die minor ticks
                     ymticks = np.arange(ymin, ymax, shortdist)
@@ -3191,7 +3320,8 @@ class KO_Sys:
                     ax.set_yticklabels(ylabels)
                 else:
                     ax.set_yticks([])
-                    ax.set(ylim=(ymin, ymax+longdist),aspect=1)
+                    ax.set(ylim=(ymin-3*longdist, ymax+longdist),aspect=1)
+                    
                 
 
                 # Set bottom and left spines as x and y axes of coordinate system
@@ -3248,6 +3378,8 @@ class KO_Sys:
                 if not invertx:
                     #arrow_fmt = dict(markersize=6, color='black', clip_on=False)
                     ax.plot((1), (0), marker='>', transform=ax.get_yaxis_transform(), **arrow_fmt)
+            
+                    
                 else:
                     ax.invert_xaxis()
                     #arrow_fmt = dict(markersize=6, color='black', clip_on=False)
@@ -3260,18 +3392,55 @@ class KO_Sys:
                     else:
                         ax.invert_yaxis()
                         #arrow_fmt = dict(markersize=6, color='black', clip_on=False)
-                        ax.plot((0), (0), marker='v', transform=ax.get_xaxis_transform(), **arrow_fmt)     
+                        ax.plot((0), (0), marker='v', transform=ax.get_xaxis_transform(), **arrow_fmt)    
+
                         
-                #Transparenz setzen
+                #Transparenz setzen bzw. Hintergrundrechteck hinter Skala zeichnen
+                        
+
                 Transparency=not(self.bg.get())
                 if Transparency:     
                     fig.patch.set(alpha=0.0)
                     ax.patch.set(alpha=0.0)
                 else:
-                    fig.patch.set(alpha=1.0)
-                    ax.patch.set(alpha=1.0)
+                    if not self.kosys.get():
+                        fig.patch.set(alpha=0.0)
+                        ax.patch.set(alpha=0.0)
+                        # Berechne die Pixelkoordinaten des Ursprungs
+                        #lower_limit_coords = (xmin, 0)  # Datenkoordinaten des Anheftpunkts
+                        #lower_limit_display_coords = ax.transData.transform(lower_limit_coords)  # Transformiere zu Display Koordinaten
+                        #lower_limit_display_coords=(lower_limit_display_coords[0],lower_limit_display_coords[1]-4.5*int(self.lsize.get()))
+                        #lower_limit_coords = ax.transData.inverted().transform(lower_limit_display_coords)
+                        #print("Lower Limit Coords",lower_limit_coords,2*int(self.lsize.get()))
+                        #ax.plot(lower_limit_coords[0],lower_limit_coords[1],marker='o')
 
 
+                        
+                        #ax.add_patch(Rectangle((xmin-longdist,lower_limit_coords[1]), (xmax-xmin)+3*longdist,abs(lower_limit_coords[1])*1.2 ,facecolor='white',edgecolor='white',clip_on=False))
+                        ax.add_patch(Rectangle((xmin-shortdist-delta_r,ymin-delta_r), (xmax-xmin)+2.*delta_r+longdist,1.3*delta_r ,facecolor='white',edgecolor='white',clip_on=False))
+
+                    else:
+                        fig.patch.set(alpha=0.0)
+                        ax.patch.set(alpha=0.0)
+                         # Berechne die Pixelkoordinaten des Ursprungs
+                        #lower_limit_coords = (xmin, 0)  # Datenkoordinaten des Anheftpunkts
+                        #lower_limit_display_coords = ax.transData.transform(lower_limit_coords)  # Transformiere zu Display Koordinaten
+                        #lower_limit_display_coords=(lower_limit_display_coords[0],lower_limit_display_coords[1]-4.5*int(self.lsize.get()))
+                        #lower_limit_coords = ax.transData.inverted().transform(lower_limit_display_coords)
+                        #print("Lower Limit Coords",lower_limit_coords,2*int(self.lsize.get()))
+                        #ax.plot(lower_limit_coords[0],lower_limit_coords[1],marker='o')
+                        ax.add_patch(Rectangle((xmin-shortdist-delta_r,ymin-shortdist-delta_r), (xmax-xmin)+2.*delta_r+longdist,2.*delta_r+ymax-ymin+longdist ,facecolor='white',edgecolor='white',clip_on=False))
+
+
+
+                
+                
+
+                #fig.tight_layout()
+                #fig.canvas.draw()
+                #fig.tight_layout()
+                #fig.canvas.draw()
+                #fig.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05)  
                 fig.canvas.draw()
                 
                 # Koordinaten des Anheftpunkts auslesen
@@ -3391,6 +3560,7 @@ class KO_Sys:
                 
                 
                 self.scale_image_not_rot=scale_image.copy()
+                #cv2.imshow("Test",self.scale_image_not_rot)
                 
                 #IMAGE DER SKALA DREHEN
                 self.make_rotated_image()
